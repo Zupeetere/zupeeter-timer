@@ -250,16 +250,16 @@ function generatedTimeEveryAfterEveryOneMinTRX() {
             `https://apilist.tronscanapi.com/api/block?sort=-balance&start=0&limit=20&producer=&number=&start_timestamp=${datetoAPISend}&end_timestamp=${datetoAPISend}`
           );
           if (res?.data?.data?.[0]) {
-            const obj = res?.data?.data[0];
+            const obj = res?.data?.data?.[0];
             const fd = new FormData();
-            fd.append("hash", `**${obj.hash.slice(-4)}`);
-            fd.append("digits", `${obj.hash.slice(-5)}`);
-            fd.append("number", obj.number);
+            fd.append("hash", `**${obj?.hash.slice(-4)}`);
+            fd.append("digits", `${obj?.hash.slice(-5)}`);
+            fd.append("number", obj?.number);
             fd.append("time", moment(time).format("HH:mm:ss"));
             let prevalue = `${moment(time).format("HH:mm:ss")}`;
-            const newString = obj.hash;
+            const newString = obj?.hash;
             let num = null;
-            for (let i = newString.length - 1; i >= 0; i--) {
+            for (let i = newString?.length - 1; i >= 0; i--) {
               if (!isNaN(parseInt(newString[i]))) {
                 num = parseInt(newString[i]);
                 break;
