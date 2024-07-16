@@ -249,8 +249,8 @@ function generatedTimeEveryAfterEveryOneMinTRX() {
           const res = await axios.get(
             `https://apilist.tronscanapi.com/api/block?sort=-balance&start=0&limit=20&producer=&number=&start_timestamp=${datetoAPISend}&end_timestamp=${datetoAPISend}`
           );
-          if (res?.data?.data[0]) {
-            const obj = res.data.data[0];
+          if (res?.data?.data?.[0]) {
+            const obj = res?.data?.data[0];
             const fd = new FormData();
             fd.append("hash", `**${obj.hash.slice(-4)}`);
             fd.append("digits", `${obj.hash.slice(-5)}`);
@@ -296,7 +296,7 @@ function generatedTimeEveryAfterEveryOneMinTRX() {
               console.log(e);
             }
           }
-        }, [4000]);
+        }, [5000]);
       } catch (e) {
         console.log(e);
       }
@@ -409,7 +409,7 @@ const generatedTimeEveryAfterEveryFiveMinTRX = () => {
     // }
     if (currentTime === 0) {
       min--;
-      if (min < 0) min = 4; // Reset min to 4 when it reaches 0
+      if (min < 0) min = 4;
     }
   });
 };
@@ -420,7 +420,6 @@ let x = true;
 let trx = true;
 
 if (x) {
-  // generateAndSendMessage();
   console.log("Waiting for the next minute to start...");
   const now = new Date();
   const secondsUntilNextMinute = 60 - now.getSeconds();
@@ -462,6 +461,7 @@ app.post("/bid-placed-node", async (req, res) => {
   // description: Big/Small
 
   const { user_id, type, round_no, amount, bet_number, description } = req.body;
+
   if (round_no && Number(round_no) <= 1) {
     return res.status(200).json({
       msg: `Refresh your page may be your game history not updated.`,
@@ -472,9 +472,24 @@ app.post("/bid-placed-node", async (req, res) => {
     return res.status(200).json({
       msg: `Everything is required`,
     });
+
+  if (user_id && Number(user_id) <= 0) {
+    return res.status(200).json({
+      msg: `Please refresh your page`,
+    });
+  }
+
   if (Number(amount) <= 0)
     return res.status(200).json({
       msg: `Amount should be grater or equal to 1.`,
+    });
+  if (type && Number(type) <= 0 )
+    return res.status(200).json({
+      msg: `Type is not define`,
+    });
+  if (type && Number(type) >= 4 )
+    return res.status(200).json({
+      msg: `Type is not define`,
     });
 
   pool.getConnection((err, connection) => {
@@ -487,10 +502,10 @@ app.post("/bid-placed-node", async (req, res) => {
     }
     // tr35_retopup
     const query_for_testing_already_exist =
-      "SELECT tr_package FROM tr35_retopup_temp WHERE tr_transid = ? AND tr_user_id = ? AND tr_type = ?";
+      "SELECT tr_package FROM tr35_retopup_temp WHERE tr_transid = ? AND tr_user_id = ? AND tr_type = 1";
     connection.query(
       query_for_testing_already_exist,
-      [String(round_no), Number(user_id), Number(type)],
+      [String(round_no), Number(user_id)],
       (err, result) => {
         if (err) {
           connection.release();
@@ -655,26 +670,22 @@ app.post("/trx_result-node", async (req, res) => {
     }
 
     const query =
-      "SELECT * FROM tr42_win_slot WHERE tr41_packtype = ? ORDER BY tr_transaction_id DESC LIMIT ?";
+      "SELECT * FROM tr42_win_slot WHERE tr41_packtype = 1 ORDER BY tr_transaction_id DESC LIMIT 200";
 
-    connection.query(
-      query,
-      [Number(gameid), parseInt(limit)],
-      (err, result) => {
-        connection.release();
-        if (err) {
-          console.error("Error executing query: ", err); // Added logging for query errors
-          return res.status(500).json({
-            msg: `Something went wrong with database connection ${err}`,
-          });
-        }
-
-        res.status(200).json({
-          msg: "Data fetched successfully",
-          data: result,
+    connection.query(query, (err, result) => {
+      connection.release();
+      if (err) {
+        console.error("Error executing query: ", err); // Added logging for query errors
+        return res.status(500).json({
+          msg: `Something went wrong with database connection ${err}`,
         });
       }
-    );
+
+      res.status(200).json({
+        msg: "Data fetched successfully",
+        data: result,
+      });
+    });
   });
 });
 
@@ -721,9 +732,9 @@ app.post("/trx-my-history-node", async (req, res) => {
       });
     }
 
-    const query = `SELECT * FROM tr35_retopup_temp WHERE tr_user_id = ? AND tr_type = ? ORDER BY tr_transid DESC LIMIT 250`;
+    const query = `SELECT * FROM tr35_retopup_temp WHERE tr_user_id = ? AND tr_type = 1 ORDER BY tr_transid DESC LIMIT 250`;
 
-    connection.query(query, [Number(userid), Number(gameid)], (err, result) => {
+    connection.query(query, [Number(userid)], (err, result) => {
       connection.release();
       if (err) {
         console.error("Error executing query: ", err); // Added logging for query errors
@@ -743,3 +754,503 @@ app.post("/trx-my-history-node", async (req, res) => {
 httpServer.listen(PORT, () => {
   console.log("Server listening on port", PORT);
 });
+
+
+
+
+// const cluster = require("cluster");
+// const http = require("http");
+// const numCPUs = require("os").cpus().length;
+
+// if (cluster.isMaster) {
+//   console.log(`Master ${process.pid} is running`);
+
+//   // Fork workers.
+//   for (let i = 0; i < numCPUs; i++) {
+//     cluster.fork();
+//   }
+
+//   cluster.on("exit", (worker, code, signal) => {
+//     console.log(`Worker ${worker.process.pid} died`);
+//     cluster.fork(); // Replace the dead worker
+//   });
+// } else {
+//   // Workers can share any TCP connection
+//   // In this case, an HTTP server
+//   const express = require("express");
+//   const app = express();
+//   const cors = require("cors");
+//   const mysql = require("mysql");
+
+//   require("dotenv").config();
+//   const corsOptions = {
+//     origin: "*",
+//     credentials: true,
+//     optionSuccessStatus: 200,
+//   };
+//   global.gc();
+//   app.use(cors(corsOptions));
+//   app.use(express.json());
+
+//   const pool = mysql.createPool({
+//     connectionLimit: 10,
+//     host: process.env.HOST,
+//     user: process.env.USER,
+//     password: "S1s5h71k#",
+//     database: process.env.DATABASE_URL,
+//     multipleStatements: true,
+//     connectTimeout: 10000,
+//   });
+
+//   app.post("/trx_result-node", async (req, res) => {
+//     const { gameid, limit } = req.body;
+
+//     if (!gameid || !limit) {
+//       return res.status(400).json({
+//         // Changed to 400 for bad request
+//         msg: "gameid and limit are required",
+//       });
+//     }
+
+//     pool.getConnection((err, connection) => {
+//       if (err) {
+//         console.error("Error getting database connection: ", err);
+//         return res.status(500).json({
+//           msg: `Something went wrong ${err}`,
+//         });
+//       }
+
+//       const query =
+//         "SELECT * FROM tr42_win_slot WHERE tr41_packtype = 1 ORDER BY tr_transaction_id DESC LIMIT 200";
+
+//       connection.query(query, (err, result) => {
+//         connection.release();
+//         if (err) {
+//           console.error("Error executing query: ", err); // Added logging for query errors
+//           return res.status(500).json({
+//             msg: `Something went wrong with database connection ${err}`,
+//           });
+//         }
+
+//         res.status(200).json({
+//           msg: "Data fetched successfully",
+//           data: result,
+//         });
+//       });
+//     });
+//   });
+
+//   app.post("/bid-placed-node", async (req, res) => {
+//     // user_id: userid
+//     // type: 1--> for 1 min, 2 for 3 min, 3 for 5 min
+//     // round_no: current no
+//     // amount: bet amount
+//     // bet_number: bet-number ( 0-9 k liye 1-10 and 11--> green, 12-->voilet, 13-->red,14--> small, 15-->big)
+//     // description: Big/Small
+
+//     const { user_id, type, round_no, amount, bet_number, description } =
+//       req.body;
+//     console.log("funciotn is hitting");
+//     if (round_no && Number(round_no) <= 1) {
+//       return res.status(200).json({
+//         msg: `Refresh your page may be your game history not updated.`,
+//       });
+//     }
+
+//     if (
+//       !user_id ||
+//       !type ||
+//       !round_no ||
+//       !amount ||
+//       !bet_number ||
+//       !description
+//     )
+//       return res.status(200).json({
+//         msg: `Everything is required`,
+//       });
+
+//     if (user_id && Number(user_id) <= 0) {
+//       return res.status(200).json({
+//         msg: `Please refresh your page`,
+//       });
+//     }
+
+//     if (Number(amount) <= 0)
+//       return res.status(200).json({
+//         msg: `Amount should be grater or equal to 1.`,
+//       });
+//     if (type && Number(type) <= 0)
+//       return res.status(200).json({
+//         msg: `Type is not define`,
+//       });
+//     if (type && Number(type) >= 4)
+//       return res.status(200).json({
+//         msg: `Type is not define`,
+//       });
+
+//     pool.getConnection((err, connection) => {
+//       if (err) {
+//         // connection.release();
+//         console.error("Error getting database connection: ", err);
+//         return res.status(500).json({
+//           msg: `Something went wrong ${err}`,
+//         });
+//       }
+//       // tr35_retopup
+//       const query_for_testing_already_exist =
+//         "SELECT tr_package FROM tr35_retopup_temp WHERE tr_transid = ? AND tr_user_id = ? AND tr_type = 1";
+//       connection.query(
+//         query_for_testing_already_exist,
+//         [String(round_no), Number(user_id)],
+//         (err, result) => {
+//           if (err) {
+//             connection.release();
+//             return res.status(500).json({
+//               msg: `Something went wrong ${err}`,
+//             });
+//           }
+//           if (
+//             [11, 12, 13]?.includes(Number(bet_number)) &&
+//             result?.find((i) => [11, 12, 13]?.includes(i?.tr_package))
+//           ) {
+//             return res.status(200).json({
+//               msg: `Already Placed on color`,
+//             });
+//           } else if (
+//             [14, 15]?.includes(Number(bet_number)) &&
+//             result?.find((i) => [14, 15]?.includes(i?.tr_package))
+//           ) {
+//             return res.status(200).json({
+//               msg: `Already placed on big/small`,
+//             });
+//           } else if (
+//             [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]?.includes(Number(bet_number)) &&
+//             result?.filter((i) =>
+//               [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]?.includes(i?.tr_package)
+//             )?.length > 2
+//           ) {
+//             return res.status(200).json({
+//               msg: `You have already placed 3  bets.`,
+//             });
+//           } else {
+//             const procedureCall =
+//               "CALL trx_bet_placing_node(?, ?, ?, ?, ?, ?, @result_msg); SELECT @result_msg;";
+//             connection.query(
+//               procedureCall,
+//               [user_id, type, round_no, amount, bet_number, description],
+//               (err, results) => {
+//                 connection.release();
+//                 if (err) {
+//                   console.error("Error executing stored procedure: ", err);
+//                   return res.status(500).json({
+//                     msg: `Something went wrong ${err}`,
+//                   });
+//                 }
+//                 const resultMsg = results[1][0]["@result_msg"];
+//                 return res.status(200).json({
+//                   msg: resultMsg,
+//                 });
+//               }
+//             );
+//           }
+//         }
+//       );
+//     });
+//   });
+
+//   app.post("/trx-my-history-node", async (req, res) => {
+//     const { gameid, userid } = req.body;
+
+//     if (!gameid || !userid) {
+//       return res.status(400).json({
+//         // Changed to 400 for bad request
+//         msg: "gameid and userid are required",
+//       });
+//     }
+
+//     pool.getConnection((err, connection) => {
+//       if (err) {
+//         console.error("Error getting database connection: ", err);
+//         return res.status(500).json({
+//           msg: `Something went wrong ${err}`,
+//         });
+//       }
+
+//       const query = `SELECT * FROM tr35_retopup_temp WHERE tr_user_id = ? AND tr_type = 1 ORDER BY tr_transid DESC LIMIT 250`;
+
+//       connection.query(query, [Number(userid)], (err, result) => {
+//         connection.release();
+//         if (err) {
+//           console.error("Error executing query: ", err); // Added logging for query errors
+//           return res.status(500).json({
+//             msg: `Something went wrong with database connection ${err}`,
+//           });
+//         }
+
+//         res.status(200).json({
+//           msg: "Data fetched successfully",
+//           earning: result,
+//         });
+//       });
+//     });
+//   });
+
+//   app.get("/", (req, res) => {
+//     res.send(
+//       `<h1>server running at port=====> ${process.env.PORT || 4000}</h1>`
+//     );
+//   });
+
+//   http.createServer(app).listen(process.env.PORT || 4000, () => {
+//     console.log(`Worker ${process.pid} started`);
+//   });
+// }
+
+// const http = require("http");
+// const {
+//   Worker,
+//   isMainThread
+// } = require("worker-thread");
+// const express = require("express");
+// const mysql = require("mysql");
+// require("dotenv").config();
+
+// if (isMainThread) {
+//   const numCPUs = require("os").cpus().length;
+
+//   for (let i = 0; i < numCPUs; i++) {
+//     new Worker(__filename);
+//   }
+// } else {
+//   // Workers can share any TCP connection
+//   // In this case, an HTTP server
+//   const express = require("express");
+//   const app = express();
+//   const cors = require("cors");
+//   const mysql = require("mysql");
+
+//   require("dotenv").config();
+//   const corsOptions = {
+//     origin: "*",
+//     credentials: true,
+//     optionSuccessStatus: 200,
+//   };
+
+//   app.use(cors(corsOptions));
+//   app.use(express.json());
+
+//   const pool = mysql.createPool({
+//     connectionLimit: 10,
+//     host: process.env.HOST,
+//     user: process.env.USER,
+//     password: "S1s5h71k#",
+//     database: process.env.DATABASE_URL,
+//     multipleStatements: true,
+//     connectTimeout: 10000,
+//   });
+
+//   app.post("/trx_result-node", async (req, res) => {
+//     console.log("function is hitting result");
+//     const { gameid, limit } = req.body;
+
+//     if (!gameid || !limit) {
+//       return res.status(400).json({
+//         // Changed to 400 for bad request
+//         msg: "gameid and limit are required",
+//       });
+//     }
+
+//     pool.getConnection((err, connection) => {
+//       if (err) {
+//         console.error("Error getting database connection: ", err);
+//         return res.status(500).json({
+//           msg: `Something went wrong ${err}`,
+//         });
+//       }
+
+//       const query =
+//         "SELECT * FROM tr42_win_slot WHERE tr41_packtype = 1 ORDER BY tr_transaction_id DESC LIMIT 200";
+
+//       connection.query(query, (err, result) => {
+//         connection.release();
+//         if (err) {
+//           console.error("Error executing query: ", err); // Added logging for query errors
+//           return res.status(500).json({
+//             msg: `Something went wrong with database connection ${err}`,
+//           });
+//         }
+
+//         res.status(200).json({
+//           msg: "Data fetched successfully",
+//           data: result,
+//         });
+//       });
+//     });
+//   });
+
+//   app.post("/bid-placed-node", async (req, res) => {
+//     console.log("function is hitting");
+//     // user_id: userid
+//     // type: 1--> for 1 min, 2 for 3 min, 3 for 5 min
+//     // round_no: current no
+//     // amount: bet amount
+//     // bet_number: bet-number ( 0-9 k liye 1-10 and 11--> green, 12-->voilet, 13-->red,14--> small, 15-->big)
+//     // description: Big/Small
+
+//     const { user_id, type, round_no, amount, bet_number, description } =
+//       req.body;
+//     console.log("funciotn is hitting");
+//     if (round_no && Number(round_no) <= 1) {
+//       return res.status(200).json({
+//         msg: `Refresh your page may be your game history not updated.`,
+//       });
+//     }
+
+//     if (
+//       !user_id ||
+//       !type ||
+//       !round_no ||
+//       !amount ||
+//       !bet_number ||
+//       !description
+//     )
+//       return res.status(200).json({
+//         msg: `Everything is required`,
+//       });
+
+//     if (user_id && Number(user_id) <= 0) {
+//       return res.status(200).json({
+//         msg: `Please refresh your page`,
+//       });
+//     }
+
+//     if (Number(amount) <= 0)
+//       return res.status(200).json({
+//         msg: `Amount should be grater or equal to 1.`,
+//       });
+//     if (type && Number(type) <= 0)
+//       return res.status(200).json({
+//         msg: `Type is not define`,
+//       });
+//     if (type && Number(type) >= 4)
+//       return res.status(200).json({
+//         msg: `Type is not define`,
+//       });
+
+//     pool.getConnection((err, connection) => {
+//       if (err) {
+//         // connection.release();
+//         console.error("Error getting database connection: ", err);
+//         return res.status(500).json({
+//           msg: `Something went wrong ${err}`,
+//         });
+//       }
+//       // tr35_retopup
+//       const query_for_testing_already_exist =
+//         "SELECT tr_package FROM tr35_retopup_temp WHERE tr_transid = ? AND tr_user_id = ? AND tr_type = 1";
+//       connection.query(
+//         query_for_testing_already_exist,
+//         [String(round_no), Number(user_id)],
+//         (err, result) => {
+//           if (err) {
+//             connection.release();
+//             return res.status(500).json({
+//               msg: `Something went wrong ${err}`,
+//             });
+//           }
+//           if (
+//             [11, 12, 13]?.includes(Number(bet_number)) &&
+//             result?.find((i) => [11, 12, 13]?.includes(i?.tr_package))
+//           ) {
+//             return res.status(200).json({
+//               msg: `Already Placed on color`,
+//             });
+//           } else if (
+//             [14, 15]?.includes(Number(bet_number)) &&
+//             result?.find((i) => [14, 15]?.includes(i?.tr_package))
+//           ) {
+//             return res.status(200).json({
+//               msg: `Already placed on big/small`,
+//             });
+//           } else if (
+//             [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]?.includes(Number(bet_number)) &&
+//             result?.filter((i) =>
+//               [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]?.includes(i?.tr_package)
+//             )?.length > 2
+//           ) {
+//             return res.status(200).json({
+//               msg: `You have already placed 3  bets.`,
+//             });
+//           } else {
+//             const procedureCall =
+//               "CALL trx_bet_placing_node(?, ?, ?, ?, ?, ?, @result_msg); SELECT @result_msg;";
+//             connection.query(
+//               procedureCall,
+//               [user_id, type, round_no, amount, bet_number, description],
+//               (err, results) => {
+//                 connection.release();
+//                 if (err) {
+//                   console.error("Error executing stored procedure: ", err);
+//                   return res.status(500).json({
+//                     msg: `Something went wrong ${err}`,
+//                   });
+//                 }
+//                 const resultMsg = results[1][0]["@result_msg"];
+//                 return res.status(200).json({
+//                   msg: resultMsg,
+//                 });
+//               }
+//             );
+//           }
+//         }
+//       );
+//     });
+//   });
+
+//   app.post("/trx-my-history-node", async (req, res) => {
+//     const { gameid, userid } = req.body;
+
+//     if (!gameid || !userid) {
+//       return res.status(400).json({
+//         // Changed to 400 for bad request
+//         msg: "gameid and userid are required",
+//       });
+//     }
+
+//     pool.getConnection((err, connection) => {
+//       if (err) {
+//         console.error("Error getting database connection: ", err);
+//         return res.status(500).json({
+//           msg: `Something went wrong ${err}`,
+//         });
+//       }
+
+//       const query = `SELECT * FROM tr35_retopup_temp WHERE tr_user_id = ? AND tr_type = 1 ORDER BY tr_transid DESC LIMIT 250`;
+
+//       connection.query(query, [Number(userid)], (err, result) => {
+//         connection.release();
+//         if (err) {
+//           console.error("Error executing query: ", err); // Added logging for query errors
+//           return res.status(500).json({
+//             msg: `Something went wrong with database connection ${err}`,
+//           });
+//         }
+
+//         res.status(200).json({
+//           msg: "Data fetched successfully",
+//           earning: result,
+//         });
+//       });
+//     });
+//   });
+
+//   app.get("/", (req, res) => {
+//     res.send(
+//       `<h1>server running at port=====> ${process.env.PORT || 4000}</h1>`
+//     );
+//   });
+
+//   http.createServer(app).listen(process.env.PORT || 4000, () => {
+//     console.log(`Worker ${process.pid} started`);
+//   });
+// }
