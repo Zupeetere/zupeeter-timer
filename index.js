@@ -231,7 +231,6 @@ function generatedTimeEveryAfterEveryOneMinTRX() {
         ? 60 - currentTime.getSeconds()
         : currentTime.getSeconds();
         console.log(timeToSend);
-    io.emit("onemintrx", timeToSend);
     if (timeToSend === 0) io.emit("result", result);
     if (timeToSend === 58) {
       const query_data = `UPDATE tr41_trx_result  SET tr41_status=2 WHERE tr41_type=1;`;
@@ -241,7 +240,7 @@ function generatedTimeEveryAfterEveryOneMinTRX() {
           console.log(e);
         });
     }
-    if (timeToSend === 6) {
+    if (timeToSend === 12) {
       const datetoAPISend = parseInt(new Date().getTime().toString());
       const actualtome = soment.tz("Asia/Kolkata");
       const time = actualtome.add(5, "hours").add(30, "minutes").valueOf();
@@ -249,7 +248,7 @@ function generatedTimeEveryAfterEveryOneMinTRX() {
       /////////////////////////////
       const queryformanualresult = `SELECT tr41_packid FROM tr41_trx_result WHERE tr41_type=1 AND tr41_status=1 LIMIT 1`;
       await queryDb(queryformanualresult, [])
-        .then(async (result) => {
+        .then((result) => {
           if (result?.length > 0) {
             manual_result = result?.[0]?.tr41_packid;
           } else {
@@ -265,7 +264,6 @@ function generatedTimeEveryAfterEveryOneMinTRX() {
           const res = await axios.get(
             `https://apilist.tronscanapi.com/api/block?sort=-balance&start=0&limit=20&producer=&number=&start_timestamp=${datetoAPISend}&end_timestamp=${datetoAPISend}`
           );
-          console.log(res?.data?.data?.[0])
           if (res?.data?.data?.[0]) {
             const obj = res?.data?.data?.[0];
             const fd = new FormData();
@@ -318,7 +316,7 @@ function generatedTimeEveryAfterEveryOneMinTRX() {
               console.log(e);
             }
           }
-        }, [5000]);
+        }, [6000]);
       } catch (e) {
         console.log(e);
       }
