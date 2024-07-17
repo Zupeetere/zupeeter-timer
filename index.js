@@ -37,10 +37,10 @@ app.use("/api/v1", todoRoutes);
 // Create the connection pool
 const pool = mysql.createPool({
   connectionLimit: 10,
-  host: process.env.HOST,
-  user: process.env.USER,
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
   password: "S1s5h71k#",
-  database: process.env.DATABASE_URL,
+  database: process.env.DB_NAME,
   multipleStatements: true,
   connectTimeout: 10000,
 });
@@ -452,10 +452,10 @@ if (x) {
   );
 
   setTimeout(() => {
-    // generatedTimeEveryAfterEveryOneMinTRX();
-    // generatedTimeEveryAfterEveryOneMin();
-    // generatedTimeEveryAfterEveryThreeMin();
-    // generatedTimeEveryAfterEveryFiveMin();
+    generatedTimeEveryAfterEveryOneMinTRX();
+    generatedTimeEveryAfterEveryOneMin();
+    generatedTimeEveryAfterEveryThreeMin();
+    generatedTimeEveryAfterEveryFiveMin();
     x = false;
   }, secondsUntilNextMinute * 1000);
 }
@@ -465,8 +465,8 @@ const finalRescheduleJob = schedule.scheduleJob(
   function () {
     twoMinTrxJob?.cancel();
     threeMinTrxJob?.cancel();
-    // generatedTimeEveryAfterEveryThreeMinTRX();
-    // generatedTimeEveryAfterEveryFiveMinTRX();
+    generatedTimeEveryAfterEveryThreeMinTRX();
+    generatedTimeEveryAfterEveryFiveMinTRX();
   }
 );
 
