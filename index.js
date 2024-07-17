@@ -9,6 +9,7 @@ require("dotenv").config();
 const schedule = require("node-schedule");
 const { default: axios } = require("axios");
 const mysql = require("mysql");
+const { queryDb } = require("./helper/adminHelper");
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -43,15 +44,6 @@ const pool = mysql.createPool({
   multipleStatements: true,
   connectTimeout: 10000,
 });
-// const pool = mysql.createPool({
-//   connectionLimit: 10,
-//   host: "103.120.178.181",
-//   user: "zupeegame_DB",
-//   password: "6xIr7wjPMi@n",
-//   database: "zupeegame_DB",
-//   multipleStatements: true,
-//   connectTimeout: 10000,
-// });
 
 // Event listener for new connections
 pool.on("connection", function (_conn) {
@@ -62,7 +54,7 @@ pool.on("connection", function (_conn) {
 });
 
 // Function to insert data into trxonetable
-function insertIntoTrxonetable(time, obj, callback) {
+function insertIntoTrxonetable(manual_result, time, obj, callback) {
   const newString = obj.hash;
   let num = null;
   for (let i = newString.length - 1; i >= 0; i--) {
@@ -82,9 +74,8 @@ function insertIntoTrxonetable(time, obj, callback) {
     let overall = JSON.stringify(obj);
     let trdigit = `${obj.hash.slice(-5)}`;
     let tr_number = obj.number;
-    // Create the insert query
-    // const sql =
-    //   "INSERT INTO tr42_win_slot (tr09_req_recipt) VALUES (?)"; // Adjust the columns and values as per your table structure
+
+    ///////////////////////  update num /////////////////////
 
     // Execute the query
     const query_id =
@@ -107,7 +98,7 @@ function insertIntoTrxonetable(time, obj, callback) {
       connection.query(
         sql43,
         [
-          num + 1,
+          manual_result > 0 ? manual_result : num + 1,
           timee,
           1,
           Number(results?.[0]?.tr_tranaction_id) + 1,
@@ -125,7 +116,7 @@ function insertIntoTrxonetable(time, obj, callback) {
       connection.query(
         sql,
         [
-          num + 1,
+          manual_result > 0 ? manual_result : num + 1,
           timee,
           1,
           Number(results?.[0]?.tr_tranaction_id) + 1,
@@ -163,7 +154,7 @@ function generatedTimeEveryAfterEveryOneMin() {
     if (timeToSend === 0) {
       try {
         const res = await axios.get(
-          "https://admin.zupeeter.com/api/resultonemin"
+          "https://admin.zupeeter.com/public/api/resultonemin"
         );
       } catch (e) {
         console.log(e);
@@ -185,7 +176,7 @@ const generatedTimeEveryAfterEveryThreeMin = () => {
       if (min < 0) {
         try {
           const res = await axios.get(
-            "https://admin.zupeeter.com/api/resultthreemin"
+            "https://admin.zupeeter.com/public/api/resultthreemin"
           );
         } catch (e) {
           console.log(e);
@@ -208,7 +199,7 @@ const generatedTimeEveryAfterEveryFiveMin = () => {
       if (min < 0) {
         try {
           const res = await axios.get(
-            "https://admin.zupeeter.com/api/resultfivemin"
+            "https://admin.zupeeter.com/public/api/resultfivemin"
           );
         } catch (e) {
           console.log(e);
@@ -229,9 +220,10 @@ let threeMinTrxJob;
 function generatedTimeEveryAfterEveryOneMinTRX() {
   let isAlreadyHit = "";
   let result = "";
+  let manual_result = "";
   const rule = new schedule.RecurrenceRule();
   rule.second = new schedule.Range(0, 59);
-  const job = schedule.scheduleJob(rule, function () {
+  const job = schedule.scheduleJob(rule, async function () {
     const currentTime = new Date();
     const timeToSend =
       currentTime.getSeconds() > 0
@@ -239,11 +231,33 @@ function generatedTimeEveryAfterEveryOneMinTRX() {
         : currentTime.getSeconds();
     io.emit("onemintrx", timeToSend);
     if (timeToSend === 0) io.emit("result", result);
+    if (timeToSend === 58) {
+      const query_data = `UPDATE tr41_trx_result  SET tr41_status=2 WHERE tr41_type=1;`;
+      await queryDb(query_data, [])
+        .then(async (result) => {})
+        .catch((e) => {
+          console.log(e);
+        });
+    }
     if (timeToSend === 6) {
       const datetoAPISend = parseInt(new Date().getTime().toString());
       const actualtome = soment.tz("Asia/Kolkata");
       const time = actualtome.add(5, "hours").add(30, "minutes").valueOf();
 
+      /////////////////////////////
+      const queryformanualresult = `SELECT tr41_packid FROM tr41_trx_result WHERE tr41_type=1 AND tr41_status=1 LIMIT 1`;
+      await queryDb(queryformanualresult, [])
+        .then(async (result) => {
+          if (result?.length > 0) {
+            manual_result = result?.[0]?.tr41_packid;
+          } else {
+            manual_result = 0;
+          }
+        })
+        .catch((e) => {
+          console.log(e);
+        });
+      /////////////////////////////
       try {
         setTimeout(async () => {
           const res = await axios.get(
@@ -284,13 +298,18 @@ function generatedTimeEveryAfterEveryOneMinTRX() {
                 }
               }
               result = num + 1;
-              insertIntoTrxonetable(time, obj, (err, results) => {
-                if (err) {
-                  console.error("Error inserting data: ", err);
-                } else {
-                  console.log("Data inserted successfully: ", results);
+              insertIntoTrxonetable(
+                manual_result,
+                time,
+                obj,
+                (err, results) => {
+                  if (err) {
+                    console.error("Error inserting data: ", err);
+                  } else {
+                    console.log("Data inserted successfully: ", results);
+                  }
                 }
-              });
+              );
               isAlreadyHit = prevalue;
             } catch (e) {
               console.log(e);
@@ -483,11 +502,11 @@ app.post("/bid-placed-node", async (req, res) => {
     return res.status(200).json({
       msg: `Amount should be grater or equal to 1.`,
     });
-  if (type && Number(type) <= 0 )
+  if (type && Number(type) <= 0)
     return res.status(200).json({
       msg: `Type is not define`,
     });
-  if (type && Number(type) >= 4 )
+  if (type && Number(type) >= 4)
     return res.status(200).json({
       msg: `Type is not define`,
     });
@@ -754,9 +773,6 @@ app.post("/trx-my-history-node", async (req, res) => {
 httpServer.listen(PORT, () => {
   console.log("Server listening on port", PORT);
 });
-
-
-
 
 // const cluster = require("cluster");
 // const http = require("http");
