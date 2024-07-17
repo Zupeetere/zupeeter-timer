@@ -55,6 +55,7 @@ pool.on("connection", function (_conn) {
 
 // Function to insert data into trxonetable
 function insertIntoTrxonetable(manual_result, time, obj, callback) {
+  console.log("JIII",obj)
   const newString = obj.hash;
   let num = null;
   for (let i = newString.length - 1; i >= 0; i--) {
@@ -229,6 +230,7 @@ function generatedTimeEveryAfterEveryOneMinTRX() {
       currentTime.getSeconds() > 0
         ? 60 - currentTime.getSeconds()
         : currentTime.getSeconds();
+        console.log(timeToSend);
     io.emit("onemintrx", timeToSend);
     if (timeToSend === 0) io.emit("result", result);
     if (timeToSend === 58) {
@@ -263,6 +265,7 @@ function generatedTimeEveryAfterEveryOneMinTRX() {
           const res = await axios.get(
             `https://apilist.tronscanapi.com/api/block?sort=-balance&start=0&limit=20&producer=&number=&start_timestamp=${datetoAPISend}&end_timestamp=${datetoAPISend}`
           );
+          console.log(res?.data?.data?.[0])
           if (res?.data?.data?.[0]) {
             const obj = res?.data?.data?.[0];
             const fd = new FormData();
@@ -449,10 +452,10 @@ if (x) {
   );
 
   setTimeout(() => {
-    generatedTimeEveryAfterEveryOneMinTRX();
-    generatedTimeEveryAfterEveryOneMin();
-    generatedTimeEveryAfterEveryThreeMin();
-    generatedTimeEveryAfterEveryFiveMin();
+    // generatedTimeEveryAfterEveryOneMinTRX();
+    // generatedTimeEveryAfterEveryOneMin();
+    // generatedTimeEveryAfterEveryThreeMin();
+    // generatedTimeEveryAfterEveryFiveMin();
     x = false;
   }, secondsUntilNextMinute * 1000);
 }
@@ -462,8 +465,8 @@ const finalRescheduleJob = schedule.scheduleJob(
   function () {
     twoMinTrxJob?.cancel();
     threeMinTrxJob?.cancel();
-    generatedTimeEveryAfterEveryThreeMinTRX();
-    generatedTimeEveryAfterEveryFiveMinTRX();
+    // generatedTimeEveryAfterEveryThreeMinTRX();
+    // generatedTimeEveryAfterEveryFiveMinTRX();
   }
 );
 
