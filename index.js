@@ -55,7 +55,6 @@ pool.on("connection", function (_conn) {
 
 // Function to insert data into trxonetable
 function insertIntoTrxonetable(manual_result, time, obj, callback) {
-  console.log("JIII",obj)
   const newString = obj.hash;
   let num = null;
   for (let i = newString.length - 1; i >= 0; i--) {
@@ -230,7 +229,7 @@ function generatedTimeEveryAfterEveryOneMinTRX() {
       currentTime.getSeconds() > 0
         ? 60 - currentTime.getSeconds()
         : currentTime.getSeconds();
-        console.log(timeToSend);
+    io.emit("onemintrx", timeToSend);
     if (timeToSend === 0) io.emit("result", result);
     if (timeToSend === 58) {
       const query_data = `UPDATE tr41_trx_result  SET tr41_status=2 WHERE tr41_type=1;`;
