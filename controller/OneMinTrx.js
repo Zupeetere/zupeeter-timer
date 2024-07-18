@@ -133,7 +133,7 @@ exports.generatedTimeEveryAfterEveryOneMinTRX = (io) => {
                 .catch((e) => {
                   console.log("error in tron api");
                   // console.log(e);
-                  getGeneratedTronResultIfFail(
+                  getGeneratedTronResultIfFailButRandom(
                     datetoAPISend,
                     isAlreadyHit,
                     result,
@@ -151,6 +151,100 @@ exports.generatedTimeEveryAfterEveryOneMinTRX = (io) => {
     console.log(e);
   }
 };
+function randomStr(len, arr) {
+  let ans = "";
+  for (let i = len; i > 0; i--) {
+    ans += arr[Math.floor(Math.random() * arr.length)];
+  }
+  return ans;
+}
+async function getGeneratedTronResultIfFailButRandom(
+  datetoAPISend,
+  isAlreadyHit,
+  result,
+  manual_result,
+  time
+) {
+  console.log("above api is failed");
+  const fd = new FormData();
+  const obj = {
+    hash: "0000000003c9a564d25473a75f10663e28ec2af72e6e5f16d413dde92d59c3ea",
+    number: 63546724,
+    size: 68325,
+    timestamp: 1721285448000,
+    txTrieRoot: "25ff7WnEyFkEm9edoVw84FBoYoiYExudyCFzTUarVz2G1bPVjm",
+    parentHash:
+      "0000000003c9a5639ef20261042c150fd3885b7148a77d6428be9129622191a4",
+    witnessId: 0,
+    witnessAddress: "TJBtdYunmQkeK5KninwgcjuK1RPDhyUWBZ",
+    nrOfTrx: 283,
+    nrOfTrx: 283,
+    witnessName: "JD Investment",
+    version: "30",
+    fee: 265.16438,
+    confirmed: false,
+    nrOfTrx: 283,
+    witnessName: "JD Investment",
+    version: "30",
+    nrOfTrx: 283,
+    witnessName: "JD Investment",
+    version: "30",
+    nrOfTrx: 283,
+    witnessName: "JD Investment",
+    witnessName: "JD Investment",
+    version: "30",
+    fee: 265.16438,
+    confirmed: false,
+    confirmations: 3,
+    netUsage: 83776,
+    energyUsage: 4107654,
+    blockReward: 16,
+    voteReward: 160,
+    revert: false,
+  };
+
+  fd.append("hash", `**${obj?.hash.slice(-4)}`);
+  fd.append("digits", `${obj?.hash.slice(-5)}`);
+  fd.append("number", obj?.number);
+  fd.append("time", moment(time).format("HH:mm:ss"));
+  let prevalue = `${moment(time).format("HH:mm:ss")}`;
+  const newString = obj?.hash;
+  let num = null;
+  for (let i = newString?.length - 1; i >= 0; i--) {
+    if (!isNaN(parseInt(newString[i]))) {
+      num = parseInt(newString[i]);
+      break;
+    }
+  }
+  fd.append("slotid", num);
+  fd.append("overall", JSON.stringify(obj));
+  try {
+    if (String(isAlreadyHit) === String(prevalue)) return;
+    // const response = await axios.post(
+    //   "https://admin.zupeeter.com/Apitrx/insert_one_trx",
+    //   fd
+    // );
+    const newString = obj.hash;
+    let num = null;
+    for (let i = newString.length - 1; i >= 0; i--) {
+      if (!isNaN(parseInt(newString[i]))) {
+        num = parseInt(newString[i]);
+        break;
+      }
+    }
+    result = num + 1;
+    insertIntoTrxonetable(manual_result, time, obj, (err, results) => {
+      if (err) {
+        console.error("Error inserting data: ", err);
+      } else {
+        console.log("Data inserted successfully: ", results);
+      }
+    });
+    isAlreadyHit = prevalue;
+  } catch (e) {
+    console.log(e);
+  }
+}
 
 async function getGeneratedTronResultIfFail(
   datetoAPISend,
