@@ -133,6 +133,13 @@ exports.generatedTimeEveryAfterEveryOneMinTRX = (io) => {
                 .catch((e) => {
                   console.log("error in tron api");
                   // console.log(e);
+                  getGeneratedTronResultIfFail(
+                    datetoAPISend,
+                    isAlreadyHit,
+                    result,
+                    manual_result,
+                    time
+                  );
                 });
             }, [6000]);
         } catch (e) {
@@ -144,6 +151,88 @@ exports.generatedTimeEveryAfterEveryOneMinTRX = (io) => {
     console.log(e);
   }
 };
+
+async function getGeneratedTronResultIfFail(
+  datetoAPISend,
+  isAlreadyHit,
+  result,
+  manual_result,
+  time
+) {
+  setTimeout(async () => {
+    await axios
+      .get(
+        `https://apilist.tronscanapi.com/api/block`,
+        {
+          params: {
+            sort: "-balance",
+            start: "0",
+            limit: "20",
+            producer: "",
+            number: "",
+            start_timestamp: datetoAPISend,
+            end_timestamp: datetoAPISend,
+          },
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      )
+      .then((res) => {
+        if (res?.data?.data?.[0]) {
+          const obj = res?.data?.data?.[0];
+          const fd = new FormData();
+          fd.append("hash", `**${obj?.hash.slice(-4)}`);
+          fd.append("digits", `${obj?.hash.slice(-5)}`);
+          fd.append("number", obj?.number);
+          fd.append("time", moment(time).format("HH:mm:ss"));
+          let prevalue = `${moment(time).format("HH:mm:ss")}`;
+          const newString = obj?.hash;
+          let num = null;
+          for (let i = newString?.length - 1; i >= 0; i--) {
+            if (!isNaN(parseInt(newString[i]))) {
+              num = parseInt(newString[i]);
+              break;
+            }
+          }
+          fd.append("slotid", num);
+          fd.append("overall", JSON.stringify(obj));
+          try {
+            if (String(isAlreadyHit) === String(prevalue)) return;
+            // const response = await axios.post(
+            //   "https://admin.zupeeter.com/Apitrx/insert_one_trx",
+            //   fd
+            // );
+            const newString = obj.hash;
+            let num = null;
+            for (let i = newString.length - 1; i >= 0; i--) {
+              if (!isNaN(parseInt(newString[i]))) {
+                num = parseInt(newString[i]);
+                break;
+              }
+            }
+            result = num + 1;
+            insertIntoTrxonetable(manual_result, time, obj, (err, results) => {
+              if (err) {
+                console.error("Error inserting data: ", err);
+              } else {
+                console.log("Data inserted successfully: ", results);
+              }
+            });
+            isAlreadyHit = prevalue;
+          } catch (e) {
+            console.log(e);
+          }
+        }
+      })
+      .catch((e) => {
+        console.log("second error in tron api ");
+        // console.log(e);
+      });
+  }, [2000]);
+}
 
 async function insertIntoTrxonetable(manual_result, time, obj, callback) {
   const newString = obj.hash;
