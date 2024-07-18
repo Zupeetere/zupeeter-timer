@@ -128,6 +128,14 @@ exports.generatedTimeEveryAfterEveryOneMinTRX = (io) => {
                     } catch (e) {
                       console.log(e);
                     }
+                  } else {
+                    getGeneratedTronResultIfFailButRandom(
+                      datetoAPISend,
+                      isAlreadyHit,
+                      result,
+                      manual_result,
+                      time
+                    );
                   }
                 })
                 .catch((e) => {
