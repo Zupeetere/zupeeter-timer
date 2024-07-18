@@ -6,6 +6,7 @@ const {
   functionToUpdateTheTransId,
   functionToUpdateTheManualResult,
   functionToGetTheManualResult,
+  functionToreturnDummyResult,
 } = require("../helper/adminHelper");
 const moment = require("moment");
 const soment = require("moment-timezone");
@@ -175,41 +176,10 @@ async function getGeneratedTronResultIfFailButRandom(
 ) {
   console.log("above api is failed");
   const fd = new FormData();
-  const obj = {
-    hash: "0000000003c9a564d25473a75f10663e28ec2af72e6e5f16d413dde92d59c3ea",
-    number: 63546724,
-    size: 68325,
-    timestamp: 1721285448000,
-    txTrieRoot: "25ff7WnEyFkEm9edoVw84FBoYoiYExudyCFzTUarVz2G1bPVjm",
-    parentHash:
-      "0000000003c9a5639ef20261042c150fd3885b7148a77d6428be9129622191a4",
-    witnessId: 0,
-    witnessAddress: "TJBtdYunmQkeK5KninwgcjuK1RPDhyUWBZ",
-    nrOfTrx: 283,
-    nrOfTrx: 283,
-    witnessName: "JD Investment",
-    version: "30",
-    fee: 265.16438,
-    confirmed: false,
-    nrOfTrx: 283,
-    witnessName: "JD Investment",
-    version: "30",
-    nrOfTrx: 283,
-    witnessName: "JD Investment",
-    version: "30",
-    nrOfTrx: 283,
-    witnessName: "JD Investment",
-    witnessName: "JD Investment",
-    version: "30",
-    fee: 265.16438,
-    confirmed: false,
-    confirmations: 3,
-    netUsage: 83776,
-    energyUsage: 4107654,
-    blockReward: 16,
-    voteReward: 160,
-    revert: false,
-  };
+  /////////////////// inbetween 0 to 4 random number //////////////////
+  const obj = functionToreturnDummyResult(
+    Math.floor(Math.random() * (4 - 0 + 1)) + 0
+  );
 
   fd.append("hash", `**${obj?.hash.slice(-4)}`);
   fd.append("digits", `${obj?.hash.slice(-5)}`);
