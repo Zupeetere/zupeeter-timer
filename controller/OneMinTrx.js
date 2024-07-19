@@ -17,13 +17,15 @@ exports.generatedTimeEveryAfterEveryOneMinTRX = (io) => {
   let result = "";
   let manual_result = "";
   try {
-    const job = schedule.schedule("* * * * * *", async function () {
+    // const job = schedule.schedule("* * * * * *", async function () {
+    setInterval(async () => {
       const currentTime = new Date();
       const timeToSend =
         currentTime.getSeconds() > 0
           ? 60 - currentTime.getSeconds()
           : currentTime.getSeconds();
       io.emit("onemintrx", timeToSend);
+      // console.log(timeToSend);
       if (timeToSend === 0) io.emit("result", result);
       if (timeToSend === 58) {
         await functionToUpdateTheManualResult([])
@@ -155,7 +157,9 @@ exports.generatedTimeEveryAfterEveryOneMinTRX = (io) => {
           console.log(e);
         }
       }
-    });
+    }, 1000);
+
+    // });
   } catch (e) {
     console.log(e);
   }

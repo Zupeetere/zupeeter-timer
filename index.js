@@ -54,11 +54,12 @@ if (x) {
     secondsUntilNextMinute
   );
 
+
   setTimeout(() => {
     OneMinTrx.generatedTimeEveryAfterEveryOneMinTRX(io);
-    OneMinWinGo.generatedTimeEveryAfterEveryOneMin(io);
-    ThreeMinWinGo.generatedTimeEveryAfterEveryThreeMin(io);
-    FiveMinWinGo.generatedTimeEveryAfterEveryFiveMin(io);
+    // OneMinWinGo.generatedTimeEveryAfterEveryOneMin(io);
+    // ThreeMinWinGo.generatedTimeEveryAfterEveryThreeMin(io);
+    // FiveMinWinGo.generatedTimeEveryAfterEveryFiveMin(io);
     x = false;
   }, secondsUntilNextMinute * 1000);
 }
